@@ -14,16 +14,13 @@ app.get('/', (req, res) => {
 
 app.use('/users', users);
 
-const startup = async () => {
-    try {
-        await mongoose.connect(process.env.DB_URI!);
-        const port = process.env.PORT || 5000;
-
-        console.log('Connected to DB...');
-        app.listen(port, () => console.log(`Listening on ${port}`));
-    } catch (ex) {
-        console.log(ex)
-    }
-};
-
-startup();
+if (!process.env.DB_URI) throw 'FATAL ERROR: Mongo DB URL not provided!';
+mongoose
+    .connect(process.env.DB_URI)
+    .then(() => {
+        const PORT = process.env.PORT || 8080;
+        app.listen(PORT, () => {
+            console.log(`Running on PORT: ${PORT}...`);
+        });
+    })
+    .catch(console.error);
