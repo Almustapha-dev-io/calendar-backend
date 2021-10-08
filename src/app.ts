@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 
-import users from './routes/users';
+import auth from './routes/auth';
 
 const app = express();
 
@@ -12,9 +12,10 @@ app.get('/', (req, res) => {
     res.send('Calendar app API running...')
 });
 
-app.use('/users', users);
+app.use('/api/auth', auth);
 
 if (!process.env.DB_URI) throw 'FATAL ERROR: Mongo DB URL not provided!';
+
 mongoose
     .connect(process.env.DB_URI)
     .then(() => {
