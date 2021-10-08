@@ -1,7 +1,10 @@
 import mongoose, { Schema } from 'mongoose';
 import Joi from 'joi';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import _ from 'lodash';
+
+import { hash, compare } from '../util/hasher';
 
 const userSchema = new Schema({
     email: {
@@ -15,6 +18,10 @@ const userSchema = new Schema({
     password:  {
         type: String,
         required: true
+    },
+    salt: {
+        type: String,
+        default: ''
     }
 });
 
@@ -27,7 +34,23 @@ userSchema.methods.generateAuthToken = function () {
     return token;
 };
 
-const User = mongoose.model('User', userSchema);
+userSchema.methods.hashPassword = async function () {
+    this.salt = crypto.randomBytes(16).toString('hex');
+    try {
+        const hashedPassword = await hash(this.password, this.salt);
+        this.password = hashedPassword;
+    } catch (err) {
+        throw err;
+    }
+}
+
+userSchema.methods.comparePassword = async function (password: string) {
+    try {
+        return await compare(password, this.salt, this.password);
+    } catch (err) {
+        throw err;
+    }
+};
 
 const validateUser = (obj: any) => {
     const schema = Joi.object({
@@ -35,9 +58,11 @@ const validateUser = (obj: any) => {
         password: Joi.string().min(8).alphanum().required(),
         fullName: Joi.string().min(2).required()
     }).required();
-
+    
     return schema.validate(obj);
 };
+
+const User = mongoose.model('User', userSchema);
 
 export const validate = validateUser;
 export default User;
