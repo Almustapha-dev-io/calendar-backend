@@ -3,6 +3,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 
 import auth from './routes/auth';
+import error from './middleware/error';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', auth);
+app.use(error);
 
 if (!process.env.DB_URI) throw 'FATAL ERROR: Mongo DB URL not provided!';
 

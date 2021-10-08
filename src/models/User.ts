@@ -9,7 +9,8 @@ import { hash, compare } from '../util/hasher';
 const userSchema = new Schema({
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     fullName: {
         type: String,
@@ -34,22 +35,29 @@ userSchema.methods.generateAuthToken = function () {
     return token;
 };
 
-userSchema.methods.hashPassword = async function () {
+userSchema.methods.hashPassword = function () {
     this.salt = crypto.randomBytes(16).toString('hex');
-    try {
-        const hashedPassword = await hash(this.password, this.salt);
-        this.password = hashedPassword;
-    } catch (err) {
-        throw err;
-    }
+
+    return new Promise(async (resolve, reject) => {
+        try {
+            const hashedPassword = await hash(this.password, this.salt);
+            this.password = hashedPassword;
+            resolve(this);
+        } catch (err) {
+            reject(err);
+        }
+    });
 }
 
-userSchema.methods.comparePassword = async function (password: string) {
-    try {
-        return await compare(password, this.salt, this.password);
-    } catch (err) {
-        throw err;
-    }
+userSchema.methods.comparePassword = function (password: string) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const isValid = await compare(password, this.salt, this.password);
+            resolve(isValid);
+        } catch (err) {
+            reject(err);
+        }
+    });
 };
 
 const validateUser = (obj: any) => {
@@ -66,4 +74,3 @@ const User = mongoose.model('User', userSchema);
 
 export const validate = validateUser;
 export default User;
-
