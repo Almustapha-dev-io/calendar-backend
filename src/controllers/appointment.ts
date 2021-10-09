@@ -88,7 +88,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
         if (now >= date.getTime())
             return res.status(422).json(response('Provide a future date!'));
     }
-    
+
     try {
         const cond = { _user, _id };
         const updates = { $set: req.body };
@@ -123,8 +123,8 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
     if (now >= date.getTime())
         return res.status(422).json(response('Provide a future date!'));
 
-    let appointment, msg;
     try {
+        let appointment, msg;
         if (_id) {
             const cond = { _user, _id };
             const updates = { $set: req.body };
@@ -133,10 +133,10 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
             if (!appointment) {
                 const errMsg = 'We don\'t have what you tried to update!';
                 return res.status(404).json(response(errMsg));
-            } 
+            }
             msg = 'Appointment updated';
         } else {
-            delete req.body.status;            
+            delete req.body.status;
             appointment = new Appointment({ ...req.body, _user });
             await appointment.save();
             msg = 'Appointment added.';
