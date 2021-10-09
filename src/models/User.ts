@@ -1,20 +1,21 @@
 import mongoose, { Schema } from 'mongoose';
 import Joi from 'joi';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import _ from 'lodash';
 
-import { hash, compare } from '../util/hasher';
+import { jwtSign } from '../util/jwt';
+import { hash, compare, genSalt } from '../util/hasher';
 
 const userSchema = new Schema({
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true
     },
     fullName: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     password:  {
         type: String,
@@ -24,19 +25,23 @@ const userSchema = new Schema({
         type: String,
         default: ''
     }
-});
+}, { timestamps: true });
 
 userSchema.methods.generateAuthToken = function () {
     const payload = _.pick(this, ['_id', 'fullName', 'email']);
-    const secret = process.env.JWT_SECRET;
     
-    if (!secret) throw 'FATAL ERROR: JWT TOKEN Not available';
-    const token = jwt.sign(payload, secret);
-    return token;
+    return new Promise(async (resolve, reject) => {
+        try {
+            const token = await jwtSign(payload);
+            resolve(token);
+        } catch (err) {
+            reject(err);
+        }
+    });
 };
 
 userSchema.methods.hashPassword = function () {
-    this.salt = crypto.randomBytes(16).toString('hex');
+    this.salt = genSalt();
 
     return new Promise(async (resolve, reject) => {
         try {
@@ -63,7 +68,7 @@ userSchema.methods.comparePassword = function (password: string) {
 const validateUser = (obj: any) => {
     const schema = Joi.object({
         email: Joi.string().email().required(),
-        password: Joi.string().min(8).alphanum().required(),
+        password: Joi.string().alphanum().min(8).required(),
         fullName: Joi.string().min(2).required()
     }).required();
     
