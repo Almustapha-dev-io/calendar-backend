@@ -7,6 +7,7 @@ import {
 } from '../middleware/validateObjectId';
 
 import {
+    deleteAppointment,
     getAppointment,
     getAppointments,
     patchAppointment,
@@ -21,5 +22,6 @@ router.get('/', isAuth, getAppointments);
 router.get('/:id', [isAuth, validateParamsObjectId], getAppointment);
 router.put('/', [isAuth, validateQueryObjectId], putAppointment);
 router.patch('/:id', [isAuth, validateParamsObjectId], patchAppointment);
+router.delete('/:id', [isAuth, validateParamsObjectId], deleteAppointment);
 
 export default router;

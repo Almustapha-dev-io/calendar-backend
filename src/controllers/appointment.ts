@@ -148,3 +148,18 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
     }
 };
 
+export const deleteAppointment = async (req: Request, res: Response, next: NextFunction) => {
+    const _user = (req as any).user._id;
+    const _id = req.params.id;
+
+    try {
+        const appointment = await Appointment.findOneAndDelete({ _user, _id }, { new: true });
+        if (!appointment)
+            return res.status(404).json(response('We don\'t have what you want to delete!'));
+
+        res.status(200).json(response('Appointment deleted!', appointment));
+    } catch (err) {
+        next(err);
+    }
+};
+
