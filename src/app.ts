@@ -6,6 +6,8 @@ import auth from './routes/auth';
 import appointments from './routes/appointments';
 import error from './middleware/error';
 
+import './util/cache';
+
 const app = express();
 
 app.use(express.json())

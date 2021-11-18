@@ -14,4 +14,5 @@ if (!PORT || !HOST) {
     client = redis.createClient(Number(PORT), HOST);
 }
 
+
 export default client

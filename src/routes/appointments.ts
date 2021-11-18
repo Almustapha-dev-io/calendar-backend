@@ -5,6 +5,7 @@ import {
     validateParamsObjectId, 
     validateQueryObjectId 
 } from '../middleware/validateObjectId';
+import clearCache from '../middleware/clearCache';
 
 import {
     deleteAppointment,
@@ -17,11 +18,11 @@ import {
 
 const router = express.Router();
 
-router.post('/', isAuth, postAppointment);
+router.post('/', [isAuth, clearCache], postAppointment);
 router.get('/', isAuth, getAppointments);
 router.get('/:id', [isAuth, validateParamsObjectId], getAppointment);
-router.put('/', [isAuth, validateQueryObjectId], putAppointment);
-router.patch('/:id', [isAuth, validateParamsObjectId], patchAppointment);
-router.delete('/:id', [isAuth, validateParamsObjectId], deleteAppointment);
+router.put('/', [isAuth, validateQueryObjectId, clearCache], putAppointment);
+router.patch('/:id', [isAuth, validateParamsObjectId, clearCache], patchAppointment);
+router.delete('/:id', [isAuth, validateParamsObjectId, clearCache], deleteAppointment);
 
 export default router;

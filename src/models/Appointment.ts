@@ -1,7 +1,14 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Types, Model } from 'mongoose';
 import Joi from 'joi';
 
-const appointmentSchema = new mongoose.Schema({
+import { IUserDocument as User } from './User';
+
+enum AppointmentStatus {
+    PENDING = 0,
+    COMPLETED = 1
+}
+
+const appointmentSchema = new mongoose.Schema<IAppointmentDocument, IAppointmentModel>({
     title: {
         type: String,
         required: true,
@@ -13,9 +20,10 @@ const appointmentSchema = new mongoose.Schema({
         trim: true
     },
     status: {
-        type: String,
-        enum: ['PENDING', 'COMPLETED'],
-        default: 'PENDING'
+        type: Number,
+        enum: [0, 1],
+        default: 0,
+        required: true
     },
     appointmentDate: {
         type: Date,
@@ -29,8 +37,31 @@ const appointmentSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+export interface IAppointment {
+    title: string;
+    details: string;
+    status: AppointmentStatus;
+    appointmentDate: Date;
+    _user: Types.ObjectId | Record<string, unknown> | User;
+};
 
-const Appointment = mongoose.model('Appointment', appointmentSchema);
+interface IAppointmentBaseDocument extends IAppointment, Document {
+    getStatus(): string;
+}
+
+export interface IAppointmentDocument extends IAppointmentBaseDocument {
+    _user: User['_id']
+}
+
+export interface IAppointmentPopulatedDocument extends IAppointmentBaseDocument {
+    _user: User
+}
+
+export interface IAppointmentModel extends Model<IAppointmentDocument> {}
+
+appointmentSchema.methods.getStatus = function() {
+    return this.status > 0 ? 'COMPLETED' : 'PENDING';
+}
 
 export const validate = (object: any, isUpdate = false) => {
     const obj: any = {
@@ -39,12 +70,9 @@ export const validate = (object: any, isUpdate = false) => {
         appointmentDate: Joi.date().required()
     };
 
-    if (isUpdate) {
-        obj.status = Joi.string()
-    }
+    if (isUpdate) obj.status = Joi.string();
     
     const schema = Joi.object(obj).required();
-    
     return schema.validate(object);
 };
 
@@ -59,4 +87,4 @@ export const validateForUpdate = (object: any) => {
     return schema.validate(object);
 };
 
-export default Appointment;
+export default mongoose.model<IAppointmentDocument, IAppointmentModel>('Appointment', appointmentSchema);

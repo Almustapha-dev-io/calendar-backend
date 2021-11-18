@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import client from './redisClient';
+import ICacheOptions from '../models/ICacheOptions';
 
 const exec = mongoose.Query.prototype.exec;
 
@@ -13,34 +14,34 @@ const redisGet = (key: string, field: string): Promise<string> => {
     });
 }
 
-(mongoose.Query.prototype as any).cache = function (opts: any = {}) {
+mongoose.Query.prototype.cache = function (opts: ICacheOptions) {
     this._useCache = true;
-    this._hashKey = JSON.stringify(opts.key || '');
+    this._hashKey = JSON.stringify(opts.key);
+    this._fieldKey = JSON.stringify(opts.fieldKey);
+
     return this;
 }
 
 mongoose.Query.prototype.exec = async function () {
-    if (!(this as any)._useCache) {
+    if (!this._useCache) {
         return exec.apply(this, arguments as any);
     }
 
-    const key = JSON.stringify(Object.assign({}, this.getQuery(), {
-        collection: (this as any).mongooseCollection.name
-    }));
+    const hashKey = this._hashKey;
+    const key = this._fieldKey;
 
-    const cachedValue = await redisGet((this as any)._hashKey, key);
+    const cachedValue = await redisGet(hashKey, key);
+    
     if (cachedValue) {
         const doc = JSON.parse(cachedValue);
 
-        console.log('FROM CACHE ====> REDIS');
         return Array.isArray(doc) ?
             doc.map(d => new this.model(d))
             : new this.model(doc);
     }
 
-    console.log('FROM MONGO')
     const result = await exec.apply(this, arguments as any);
-    client.hset((this as any)._hashKey, key, JSON.stringify(result));
+    client.hset(hashKey, key, JSON.stringify(result));
 
     return result;
 };

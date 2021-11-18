@@ -13,12 +13,10 @@ const isAuth = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         const payload = await jwtVerify(token.trim());
-
         const user = await User.findById(payload._id);
         if (!user) return res.status(401).json(response('Could not verify user\'s identity.'));
 
-        (req as any).user = user;
-
+        req.user = user;
         next();
     } catch (err) {
         next(err);

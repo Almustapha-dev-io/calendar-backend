@@ -1,11 +1,11 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import Joi from 'joi';
 import _ from 'lodash';
 
 import { jwtSign } from '../util/jwt';
 import { hash, compare, genSalt } from '../util/hasher';
 
-const userSchema = new Schema({
+const userSchema = new Schema<IUserDocument, IUserModel>({
     email: {
         type: String,
         required: true,
@@ -27,41 +27,45 @@ const userSchema = new Schema({
     }
 }, { timestamps: true });
 
+export interface IUser {
+    email: string;
+    fullName: string;
+    password: string;
+    salt: string;
+};
+
+export interface IUserDocument extends IUser, Document {
+    hashPassword(): Promise<IUser>;
+    comparePassword(password: string): Promise<boolean>;
+    generateAuthToken(): Promise<string>;
+};
+
+export interface IUserModel extends Model<IUserDocument> {}
+
 userSchema.methods.generateAuthToken = function () {
     const payload = _.pick(this, ['_id', 'fullName', 'email']);
     
     return new Promise(async (resolve, reject) => {
-        try {
-            const token = await jwtSign(payload);
-            resolve(token);
-        } catch (err) {
-            reject(err);
-        }
+        const token = await jwtSign(payload).catch(reject);
+        resolve(token);
     });
 };
+
 
 userSchema.methods.hashPassword = function () {
     this.salt = genSalt();
 
     return new Promise(async (resolve, reject) => {
-        try {
-            const hashedPassword = await hash(this.password, this.salt);
-            this.password = hashedPassword;
-            resolve(this);
-        } catch (err) {
-            reject(err);
-        }
+        const hashedPassword = await hash(this.password, this.salt).catch(reject);
+        this.password = hashedPassword!;
+        resolve(this);
     });
 }
 
 userSchema.methods.comparePassword = function (password: string) {
     return new Promise(async (resolve, reject) => {
-        try {
-            const isValid = await compare(password, this.salt, this.password);
-            resolve(isValid);
-        } catch (err) {
-            reject(err);
-        }
+        const isValid = await compare(password, this.salt, this.password).catch(reject);
+        resolve(isValid);
     });
 };
 
@@ -75,7 +79,5 @@ const validateUser = (obj: any) => {
     return schema.validate(obj);
 };
 
-const User = mongoose.model('User', userSchema);
-
 export const validate = validateUser;
-export default User;
+export default mongoose.model<IUserDocument, IUserModel>('User', userSchema);
