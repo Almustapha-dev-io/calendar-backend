@@ -3,8 +3,8 @@ import ICacheOptions from '../../src/models/ICacheOptions';
 import { IUserModel, IUserDocument } from '../../src/models/User';
 
 declare module 'mongoose' {
-    interface Query<T, DocType> {
-        cache(options: ICacheOptions): Query<IUserModel, IUserDocument>;
+    interface Query {
+        cache(options: ICacheOptions): Query<T>;
         _useCache: boolean;
         _hashKey: string;
         _fieldKey: string;

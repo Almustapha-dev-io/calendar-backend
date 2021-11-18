@@ -1,7 +1,7 @@
 import { Response, Request, NextFunction } from 'express';
 
 import User from '../models/User';
-import { response } from '../util/buildResponse';
+import response from '../util/buildResponse';
 import { jwtVerify } from '../util/jwt';
 
 const isAuth = async (req: Request, res: Response, next: NextFunction) => {

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import _ from 'lodash';
 
 import User, { validate } from '../models/User';
-import { response } from '../util/buildResponse'
+import response from '../util/buildResponse'
 
 export const signUp = async (req: Request, res: Response, next: NextFunction) => {
     const { error } = validate(req.body);

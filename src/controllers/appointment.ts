@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { response } from '../util/buildResponse';
+import response from '../util/buildResponse';
 import Appointment, { validate, validateForUpdate } from '../models/Appointment';
+import formatDate from '../util/formatDate';
 
 export const getAppointments = async (req: Request, res: Response, next: NextFunction) => {
     const page = Number(req.query.page) || 1;
@@ -28,12 +29,22 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
     res.status(200).json(response('Appointments fetched', data));
 };
 
+
+export const getAppointmentsForDate = async (req: Request, res: Response, next: NextFunction) => {
+    res.status(200).send('Success');
+
+};
+
 export const getAppointment = async (req: Request, res: Response, next: NextFunction) => {
     const _user = req.user._id;
     const appointment = await Appointment
         .findOne({ _user, _id: req.params.id })
         .populate('_user', 'fullName')
         .select('-__v')
+        .cache({
+            key: _user.toString(),
+            fieldKey: `appointment_${req.params.id}`
+        })
         .catch(next);
 
     if (!appointment) {
@@ -59,7 +70,7 @@ export const postAppointment = async (req: Request, res: Response, next: NextFun
     const _user = (req).user._id;
     const body: any = {
         ...req.body,
-        appointmentDate: date,
+        appointmentDate: formatDate(date),
         _user
     };
 
@@ -81,7 +92,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
     if (req.body.appointmentDate) {
         const now = new Date().getTime();
         const date = new Date(req.body.appointmentDate);
-        req.body.appointmentDate = date;
+        req.body.appointmentDate = formatDate(date);
 
         if (now >= date.getTime())
             return res.status(422).json(response('Provide a future date!'));
@@ -106,7 +117,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
 
 export const putAppointment = async (req: Request, res: Response, next: NextFunction) => {
     const _user = (req).user._id;
-    const _id = req.query.id;
+    const _id = req.params.id;
 
     const { error } = validate(req.body, true);
     if (error) {
@@ -116,7 +127,7 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
 
     const now = new Date().getTime();
     const date = new Date(req.body.appointmentDate);
-    req.body.appointmentDate = date;
+    req.body.appointmentDate = formatDate(date);
 
     if (now >= date.getTime()) {
         return res.status(422).json(response('Provide a future date!'));
