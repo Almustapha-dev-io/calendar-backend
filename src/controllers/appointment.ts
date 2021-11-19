@@ -4,6 +4,9 @@ import response from '../util/buildResponse';
 import Appointment, { validate, validateForUpdate } from '../models/Appointment';
 import formatDate from '../util/formatDate';
 
+const { isNaN, isInteger } = Number;
+
+
 export const getAppointments = async (req: Request, res: Response, next: NextFunction) => {
     const page = Number(req.query.page) || 1;
     const pageSize = Number(req.query.pageSize) || 10;
@@ -30,9 +33,34 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
 };
 
 
-export const getAppointmentsForDate = async (req: Request, res: Response, next: NextFunction) => {
-    res.status(200).send('Success');
+export const getAppointmentsForMonth = async (req: Request, res: Response, next: NextFunction) => {
+    const _user = req.user._id;
+    const  month = +req.params.month;
+    const  year = +req.params.year;
 
+    if (!month || !year) {
+        return res.status(400).json(response('Month and Year are required!'));
+    }
+
+    if (isNaN(month) || isNaN(year) || !isInteger(month) || !isInteger(year)) {
+        return res.status(400).json(response('Month and year must be valid integers'));
+    }
+
+    if (month > 12 || month <= 0) {
+        return res.status(400).json(response('Enter a valid month 1~12'));
+    }
+
+    const firstDay = new Date(`${year}-${month}-01T00:00:00Z`);
+    const lastDay = new Date(year, month, 1);
+
+    const query = { $gte: firstDay, $lte: lastDay };
+    
+    const appointments = await Appointment
+        .find({ appointmentDate: query, _user })
+        .cache({ key: req.user._id, fieldKey: `appointments_${firstDay}_${lastDay}` })
+        .catch(next);
+
+    res.status(200).json(response('Appointments fetched', appointments));
 };
 
 export const getAppointment = async (req: Request, res: Response, next: NextFunction) => {
@@ -57,8 +85,7 @@ export const getAppointment = async (req: Request, res: Response, next: NextFunc
 export const postAppointment = async (req: Request, res: Response, next: NextFunction) => {
     const { error } = validate(req.body);
     if (error) {
-        const errMsg = error.details[0].message;
-        return res.status(400).json(response(errMsg));
+        return res.status(400).json(response(error.details[0].message));
     }
 
     const now = new Date().getTime();
@@ -85,8 +112,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
 
     const { error } = validateForUpdate(req.body);
     if (error) {
-        const errMsg = error.details[0].message;
-        return res.status(422).json(response(errMsg));
+        return res.status(422).json(response(error.details[0].message));
     }
 
     if (req.body.appointmentDate) {
@@ -98,11 +124,11 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
             return res.status(422).json(response('Provide a future date!'));
     }
 
-    const cond = { _user, _id };
+    const query = { _user, _id };
     const updates = { $set: req.body };
     const options = { new: true };
     const appointment = await Appointment
-        .findOneAndUpdate(cond, updates, options)
+        .findOneAndUpdate(query, updates, options)
         .catch(next);
 
     if (!appointment) {
@@ -114,15 +140,13 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
 
 };
 
-
 export const putAppointment = async (req: Request, res: Response, next: NextFunction) => {
     const _user = (req).user._id;
     const _id = req.params.id;
 
     const { error } = validate(req.body, true);
     if (error) {
-        const errMsg = error.details[0].message;
-        return res.status(422).json(response(errMsg));
+        return res.status(422).json(response(error.details[0].message));
     }
 
     const now = new Date().getTime();
@@ -133,14 +157,12 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
         return res.status(422).json(response('Provide a future date!'));
     }
 
-    let appointment, msg;
-
     const cond = { _user, _id };
     const updates = { $set: req.body };
     const options = { new: true };
-    msg = 'Appointment updated';
+    let msg = 'Appointment updated';
 
-    appointment = await Appointment
+    let appointment = await Appointment
         .findOneAndUpdate(cond, updates, options)
         .catch(next);
 

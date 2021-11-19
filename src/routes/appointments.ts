@@ -12,17 +12,17 @@ import {
     patchAppointment,
     postAppointment,
     putAppointment,
-    getAppointmentsForDate
+    getAppointmentsForMonth
 } from '../controllers/appointment';
 
 const router = express.Router();
 
 router.get('/', isAuth, getAppointments);
-router.get('/:date/all', [isAuth, validateDate], getAppointmentsForDate)
+router.get('/:month/:year', isAuth, getAppointmentsForMonth);
 router.get('/:id', [isAuth, validateObjectId], getAppointment);
-router.post('/', [isAuth, clearCache], postAppointment);
-router.put('/:id', [isAuth, validateObjectId, clearCache], putAppointment);
-router.patch('/:id', [isAuth, validateObjectId, clearCache], patchAppointment);
+router.post('/', [isAuth, validateDate, clearCache], postAppointment);
+router.put('/:id', [isAuth, validateObjectId, validateDate, clearCache], putAppointment);
+router.patch('/:id', [isAuth, validateObjectId, validateDate, clearCache], patchAppointment);
 router.delete('/:id', [isAuth, validateObjectId, clearCache], deleteAppointment);
 
 export default router;

@@ -1,18 +1,8 @@
 import mongoose from 'mongoose';
-import client from './redisClient';
+import client, { redisGet } from './redisClient';
 import ICacheOptions from '../models/ICacheOptions';
 
 const exec = mongoose.Query.prototype.exec;
-
-const redisGet = (key: string, field: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        client.hget(key, field, (err, value) => {
-            if (err) return reject(err);
-
-            resolve(value);
-        });
-    });
-}
 
 mongoose.Query.prototype.cache = function (opts: ICacheOptions) {
     this._useCache = true;
@@ -31,7 +21,7 @@ mongoose.Query.prototype.exec = async function () {
     const key = this._fieldKey;
 
     const cachedValue = await redisGet(hashKey, key);
-    
+
     if (cachedValue) {
         const doc = JSON.parse(cachedValue);
 
@@ -41,7 +31,7 @@ mongoose.Query.prototype.exec = async function () {
     }
 
     const result = await exec.apply(this, arguments as any);
-    client.hset(hashKey, key, JSON.stringify(result));
+    if (result) client.hset(hashKey, key, JSON.stringify(result));
 
     return result;
 };

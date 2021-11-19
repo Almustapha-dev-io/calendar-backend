@@ -14,5 +14,14 @@ if (!PORT || !HOST) {
     client = redis.createClient(Number(PORT), HOST);
 }
 
+export const redisGet = (key: string, field: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        client.hget(key, field, (err, value) => {
+            if (err) return reject(err);
 
-export default client
+            resolve(value);
+        });
+    });
+};
+
+export default client;
