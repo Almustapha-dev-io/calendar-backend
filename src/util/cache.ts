@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import client, { redisGet } from './redisClient';
 import ICacheOptions from '../models/ICacheOptions';
+import logger from '../util/logger';
 
 const exec = mongoose.Query.prototype.exec;
 

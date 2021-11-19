@@ -2,32 +2,31 @@ import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 
-import auth from './routes/auth';
-import appointments from './routes/appointments';
-import error from './middleware/error';
+import logErrors from './startup/logging';
+import registerRoutes from './startup/routes';
+import enableProdMode from './startup/prod';
 
+import logger from './util/logger';
 import './util/cache';
 
 const app = express();
 
-app.use(express.json())
+logErrors();
+if (process.env.NODE_ENV === 'production') enableProdMode(app);
+registerRoutes(app);
 
-app.get('/', (req, res) => {
-    res.send('Calendar app API running...')
-});
-
-app.use('/api/auth', auth);
-app.use('/api/appointments', appointments);
-app.use(error);
-
-if (!process.env.DB_URI) throw 'FATAL ERROR: Mongo DB URL not provided!';
+if (!process.env.DB_URI) {
+    const msg = 'FATAL ERROR: Mongo DB URL not provided!';
+    logger.error(msg);
+    throw Error(msg);
+}
 
 mongoose
     .connect(process.env.DB_URI)
     .then(() => {
         const PORT = process.env.PORT || 8080;
         app.listen(PORT, () => {
-            console.log(`Running on PORT: ${PORT}...`);
+            logger.info(`Running on PORT: ${PORT}...`);
         });
     })
-    .catch(console.error);
+    .catch(e => logger.error(e.message));

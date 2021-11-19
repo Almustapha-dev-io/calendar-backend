@@ -4,7 +4,7 @@ import response from '../util/buildResponse';
 import Appointment, { validate, validateForUpdate } from '../models/Appointment';
 import formatDate from '../util/formatDate';
 
-const { isNaN, isInteger } = Number;
+const { isInteger } = Number;
 
 
 export const getAppointments = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,11 +38,7 @@ export const getAppointmentsForMonth = async (req: Request, res: Response, next:
     const  month = +req.params.month;
     const  year = +req.params.year;
 
-    if (!month || !year) {
-        return res.status(400).json(response('Month and Year are required!'));
-    }
-
-    if (isNaN(month) || isNaN(year) || !isInteger(month) || !isInteger(year)) {
+    if (!month || !year || !isInteger(month) || !isInteger(year)) {
         return res.status(400).json(response('Month and year must be valid integers'));
     }
 
@@ -52,11 +48,9 @@ export const getAppointmentsForMonth = async (req: Request, res: Response, next:
 
     const firstDay = new Date(`${year}-${month}-01T00:00:00Z`);
     const lastDay = new Date(year, month, 1);
-
-    const query = { $gte: firstDay, $lte: lastDay };
     
     const appointments = await Appointment
-        .find({ appointmentDate: query, _user })
+        .find({ appointmentDate: { $gte: firstDay, $lte: lastDay }, _user })
         .cache({ key: req.user._id, fieldKey: `appointments_${firstDay}_${lastDay}` })
         .catch(next);
 

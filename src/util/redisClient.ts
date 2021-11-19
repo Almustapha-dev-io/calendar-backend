@@ -1,4 +1,5 @@
 import redis from 'redis';
+import logger from '../util/logger';
 
 const PORT = process.env.REDIS_PORT;
 const HOST = process.env.REDIS_HOST;
@@ -9,6 +10,8 @@ const DEFAULT_URL = 'redis://127.0.0.1:6379';
 let client: redis.RedisClient;
 
 if (!PORT || !HOST) {
+    if (process.env.NODE_ENV === 'production') logger.error('Provide redis client details!');
+
     client = redis.createClient(DEFAULT_URL);
 } else {
     client = redis.createClient(Number(PORT), HOST);
