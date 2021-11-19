@@ -8,6 +8,7 @@ if (process.env.DB_LOG_URI) {
         level: 'error',
         db: process.env.DB_LOG_URI,
         collection: 'logs',
+        tryReconnect: true,
         options: {
             useNewUrlParser: true,
             useUnifiedTopology: true
@@ -15,18 +16,18 @@ if (process.env.DB_LOG_URI) {
     }));
 }
 
-errorTransports.push(new transports.File({
-    filename: 'errors.log',
-    level: 'error',
-}));
-
+if (process.env.LOG_FILE) {
+    errorTransports.push(new transports.File({
+        filename: process.env.LOG_FILE,
+        level: 'error',
+    }));
+}
 
 const logger = createLogger({
     level: 'info',
     format: format.json(),
     exceptionHandlers: errorTransports
 });
-
 
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new transports.Console({ 
