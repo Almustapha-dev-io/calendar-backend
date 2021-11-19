@@ -21,7 +21,7 @@ mongoose.Query.prototype.exec = async function () {
     const hashKey = this._hashKey;
     const key = this._fieldKey;
 
-    const cachedValue = await redisGet(hashKey, key);
+    const cachedValue = await redisGet(hashKey, key).catch(e => {logger.error(e.message)});
 
     if (cachedValue) {
         const doc = JSON.parse(cachedValue);

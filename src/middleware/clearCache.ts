@@ -3,9 +3,7 @@ import clearHash from '../util/cache';
 
 const clearCache = async (req: Request, res: Response, next: NextFunction) => {
     await next();
-
-    const _user = req.user._id;
-    clearHash(_user);
+    clearHash(req.user._id);
 };
 
 export default clearCache;

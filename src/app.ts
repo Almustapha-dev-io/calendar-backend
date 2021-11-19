@@ -26,7 +26,7 @@ mongoose
     .then(() => {
         const PORT = process.env.PORT || 8080;
         app.listen(PORT, () => {
-            logger.info(`Running on PORT: ${PORT}...`);
+            logger.info(`Application running on PORT ${PORT}...`);
         });
     })
     .catch(e => logger.error(e.message));
