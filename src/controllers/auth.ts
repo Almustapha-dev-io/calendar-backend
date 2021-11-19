@@ -17,10 +17,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
     if (user) return res.status(422).json(response('A user with given email exists on our system!'));
 
     user = new User(req.body);
-    await user
-        .hashPassword()
-        .catch(next);
-
+    await user.hashPassword().catch(next);
     await user.save().catch(next);
 
     const data = _.pick(user, ['email', 'fullName', '_id']);
@@ -38,9 +35,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
 
     if (!user) return res.status(400).json(response(errMsg));
 
-    const passwordValid = await user
-        .comparePassword(password)
-        .catch(next);
+    const passwordValid = await user.comparePassword(password).catch(next);
     if (!passwordValid) return res.status(400).json(response(errMsg));
 
     const token = await user
