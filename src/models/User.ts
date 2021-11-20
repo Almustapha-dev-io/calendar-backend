@@ -12,7 +12,12 @@ const userSchema = new Schema<IUserDocument, IUserModel>({
         unique: true,
         trim: true
     },
-    fullName: {
+    firstName: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    lastName: {
         type: String,
         required: true,
         trim: true
@@ -24,14 +29,25 @@ const userSchema = new Schema<IUserDocument, IUserModel>({
     salt: {
         type: String,
         default: ''
+    },
+    verified: {
+        type: Boolean,
+        default: false
+    },
+    verificationToken: {
+        type: String,
+        default: ''
     }
 }, { timestamps: true });
 
 export interface IUser {
     email: string;
-    fullName: string;
+    firstName: string;
+    lastName: string;
     password: string;
     salt: string;
+    verificationToken: string;
+    verified: boolean;
 };
 
 export interface IUserDocument extends IUser, Document {
@@ -52,10 +68,14 @@ userSchema.methods.generateAuthToken = function () {
 };
 
 
-userSchema.methods.hashPassword = function () {
-    this.salt = genSalt();
-
+userSchema.methods.hashPassword = async function () {
     return new Promise(async (resolve, reject) => {
+        try {
+            this.salt = await genSalt()
+        } catch (e) {
+            return reject(e);
+        }
+
         const hashedPassword = await hash(this.password, this.salt).catch(reject);
         this.password = hashedPassword!;
         resolve(this);
@@ -73,7 +93,8 @@ const validateUser = (obj: any) => {
     const schema = Joi.object({
         email: Joi.string().email().required(),
         password: Joi.string().alphanum().min(8).required(),
-        fullName: Joi.string().min(2).required()
+        firstName: Joi.string().min(2).required(),
+        lastName: Joi.string().min(2).required()
     }).required();
     
     return schema.validate(obj);

@@ -7,12 +7,12 @@ import registerRoutes from './startup/routes';
 import enableProdMode from './startup/prod';
 
 import logger from './util/logger';
+
 import './util/cache';
 
 const app = express();
 
 logErrors();
-
 if (process.env.NODE_ENV === 'production') enableProdMode(app);
 registerRoutes(app);
 

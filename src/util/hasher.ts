@@ -24,4 +24,12 @@ export const compare = (str: string, salt: string, hash: string): Promise<boolea
     })
 };
 
-export const genSalt = () => crypto.randomBytes(16).toString('hex');
+export const genSalt = (size = 16): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        crypto.randomBytes(size, (err, buffer) => {
+            if (err) return reject(err);
+
+            resolve(buffer.toString('hex'));
+        });
+    })
+};

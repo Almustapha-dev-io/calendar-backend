@@ -1,5 +1,5 @@
 import logger from '../util/logger';
 
-export default function () {
+export default () => {
     logger.exceptions.handle();
 }

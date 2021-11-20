@@ -21,6 +21,8 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.0.9",
+    "nodemailer": "^6.7.1",
+    "nodemailer-sendgrid-transport": "^0.2.0",
     "redis": "^3.1.2",
     "winston": "^3.3.3",
     "winston-mongodb": "^5.0.7"
@@ -34,6 +36,7 @@
     "@types/lodash": "^4.14.175",
     "@types/mongoose": "^5.11.97",
     "@types/node": "^16.10.3",
+    "@types/nodemailer": "^6.4.4",
     "@types/redis": "^2.8.32",
     "@types/winston": "^2.4.4"
   },
