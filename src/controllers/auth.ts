@@ -34,7 +34,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 export const signIn = async (req: Request, res: Response, next: NextFunction) => {
-    const errMsg = 'Invalid username or password.';
+    const errMsg = 'Invalid email or password.';
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json(response(errMsg));
 
@@ -47,8 +47,9 @@ export const signIn = async (req: Request, res: Response, next: NextFunction) =>
         if (!passwordValid) return res.status(400).json(response(errMsg));
         if (!user.verified) return res.status(401).json(response('Account email not verfied!'));
 
-        const token = await user.generateAuthToken();        
-        res.status(200).json(response('Login Successful', { token }));
+        const token = await user.generateAuthToken();
+        const userInfo = _.pick(user, ['firstName', 'lastName', 'email', 'verified']);  
+        res.status(200).json(response('Login Successful', { token, userInfo }));
     } catch (err) {
         next(err);
     }
