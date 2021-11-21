@@ -7,6 +7,7 @@ let client = redis.createClient(REDIS_URL);
 export const redisGet = (key: string, field: string): Promise<string> => {
     return new Promise((resolve, reject) => {
         if (!client) return reject('Client is unavailable');
+        
         client.hget(key, field, (err, value) => {
             if (err) return reject(err);
 

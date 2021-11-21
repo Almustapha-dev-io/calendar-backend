@@ -34,10 +34,9 @@ const userSchema = new Schema<IUserDocument, IUserModel>({
         type: Boolean,
         default: false
     },
-    verificationToken: {
-        type: String,
-        default: ''
-    }
+    verificationToken: String,
+    passwordResetToken: String,
+    passwordResetTokenExp: Number
 }, { timestamps: true });
 
 export interface IUser {
@@ -47,6 +46,8 @@ export interface IUser {
     password: string;
     salt: string;
     verificationToken: string;
+    passwordResetToken: string;
+    passwordResetTokenExp: number;
     verified: boolean;
 };
 
@@ -62,8 +63,12 @@ userSchema.methods.generateAuthToken = function () {
     const payload = _.pick(this, ['_id', 'fullName', 'email']);
     
     return new Promise(async (resolve, reject) => {
-        const token = await jwtSign(payload).catch(reject);
-        resolve(token);
+        try {
+            const token = await jwtSign(payload);
+            resolve(token);
+        } catch (err) {
+            reject(err);
+        }
     });
 };
 
@@ -72,20 +77,24 @@ userSchema.methods.hashPassword = async function () {
     return new Promise(async (resolve, reject) => {
         try {
             this.salt = await genSalt()
-        } catch (e) {
-            return reject(e);
+            const hashedPassword = await hash(this.password, this.salt);
+            this.password = hashedPassword!;
+            resolve(this);
+        } catch (err) {
+            reject(err);
         }
 
-        const hashedPassword = await hash(this.password, this.salt).catch(reject);
-        this.password = hashedPassword!;
-        resolve(this);
     });
 }
 
 userSchema.methods.comparePassword = function (password: string) {
     return new Promise(async (resolve, reject) => {
-        const isValid = await compare(password, this.salt, this.password).catch(reject);
-        resolve(isValid);
+        try {
+            const isValid = await compare(password, this.salt, this.password);
+            resolve(isValid);
+        } catch (err) {
+            reject(err);
+        }
     });
 };
 

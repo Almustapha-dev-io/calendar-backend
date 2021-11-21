@@ -21,19 +21,23 @@ mongoose.Query.prototype.exec = async function () {
     const hashKey = this._hashKey;
     const key = this._fieldKey;
 
-    const cachedValue = await redisGet(hashKey, key).catch(e => {logger.error(e.message)});
+    try {
+        const cachedValue = await redisGet(hashKey, key);
 
-    if (cachedValue) {
-        const doc = JSON.parse(cachedValue);
+        if (cachedValue) {
+            const doc = JSON.parse(cachedValue);
 
-        return Array.isArray(doc) ?
-            doc.map(d => new this.model(d))
-            : new this.model(doc);
+            return Array.isArray(doc) ?
+                doc.map(d => new this.model(d))
+                : new this.model(doc);
+        }
+
+    } catch (err) {
+        logger.error(err)
     }
 
     const result = await exec.apply(this, arguments as any);
     if (result) client.hset(hashKey, key, JSON.stringify(result));
-
     return result;
 };
 
