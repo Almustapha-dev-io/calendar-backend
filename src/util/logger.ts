@@ -19,7 +19,7 @@ if (process.env.DB_LOG_URI) {
 if (process.env.LOG_FILE) {
     errorTransports.push(new transports.File({
         filename: process.env.LOG_FILE,
-        level: 'error',
+        level: 'error'
     }));
 }
 
@@ -31,7 +31,7 @@ const logger = createLogger({
 
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new transports.Console({ 
-        format: format.simple()
+        format: format.json()
     }));
 }
 

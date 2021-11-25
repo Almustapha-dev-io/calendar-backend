@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import dayjs from 'dayjs';
 
 import response from '../util/buildResponse';
 import Appointment, { validate, validateForUpdate } from '../models/Appointment';
@@ -10,7 +11,7 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
     const page = Number(req.query.page) || 1;
     const pageSize = Number(req.query.pageSize) || 10;
     const _user = req.user._id;
-    
+
     try {
         const totalDocs = await Appointment.countDocuments({ _user });
         const appointments = await Appointment
@@ -19,11 +20,11 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
             .select('-__v')
             .skip((page - 1) * pageSize)
             .limit(pageSize)
-            .cache({ 
-                key: _user.toString(), 
+            .cache({
+                key: _user.toString(),
                 fieldKey: `allAppointments_${page}_${pageSize}`
             });
-    
+
         res.status(200).json(response('Appointments fetched', { appointments, totalDocs }));
     } catch (err) {
         next(err);
@@ -32,8 +33,8 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
 
 export const getAppointmentsForMonth = async (req: Request, res: Response, next: NextFunction) => {
     const _user = req.user._id;
-    const  month = +req.params.month;
-    const  year = +req.params.year;
+    const month = +req.params.month;
+    const year = +req.params.year;
 
     if (!month || !year || !isInteger(month) || !isInteger(year)) {
         return res.status(400).json(response('Month and year must be valid integers'));
@@ -43,14 +44,16 @@ export const getAppointmentsForMonth = async (req: Request, res: Response, next:
         return res.status(400).json(response('Enter a valid month 1~12'));
     }
 
-    const firstDay = new Date(`${year}-${month}-01T00:00:00Z`);
-    const lastDay = new Date(year, month, 1);
-    
+    const statrtDate = dayjs(`${year}-${month}-01`);
+    const daysInMonth = statrtDate.daysInMonth();
+    const firstDay = dayjs(`${year}-${month}-01`).format('YYYY-MM-DD');
+    const lastDay = dayjs(`${year}-${month}-${daysInMonth}`).format('YYYY-MM-DD');
+
     try {
         const appointments = await Appointment
-            .find({ appointmentDate: { $gte: firstDay, $lte: lastDay }, _user })
+            .find({ appointmentDate: { $gte: new Date(firstDay), $lte: new Date(lastDay) }, _user })
             .cache({ key: req.user._id, fieldKey: `appointments_${firstDay}_${lastDay}` });
-    
+
         res.status(200).json(response('Appointments fetched', appointments));
     } catch (err) {
         next(err);
@@ -68,11 +71,11 @@ export const getAppointment = async (req: Request, res: Response, next: NextFunc
                 key: _user.toString(),
                 fieldKey: `appointment_${req.params.id}`
             });
-    
+
         if (!appointment) {
             return res.status(404).json(response('We don\'t have that!'));
         }
-    
+
         res.status(200).json(response('Appointment fetched', appointment));
     } catch (err) {
         next(err);
@@ -91,7 +94,7 @@ export const postAppointment = async (req: Request, res: Response, next: NextFun
     if (now >= date.getTime())
         return res.status(400).json(response('Provide a future date!'));
 
-    const _user = (req).user._id;
+    const _user = req.user._id;
     const body: any = {
         ...req.body,
         appointmentDate: formatDate(date),
@@ -108,7 +111,7 @@ export const postAppointment = async (req: Request, res: Response, next: NextFun
 };
 
 export const patchAppointment = async (req: Request, res: Response, next: NextFunction) => {
-    const _user = (req).user._id;
+    const _user = req.user._id;
     const _id = req.params.id;
 
     const { error } = validateForUpdate(req.body);
@@ -129,14 +132,13 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
         const query = { _user, _id };
         const updates = { $set: req.body };
         const options = { new: true };
-        const appointment = await Appointment
-            .findOneAndUpdate(query, updates, options);
-    
+        const appointment = await Appointment.findOneAndUpdate(query, updates, options);
+
         if (!appointment) {
             const errMsg = 'We dont have what you tried to update!';
             return res.status(404).json(response(errMsg));
         }
-    
+
         res.status(200).json(response('Appointment updated.', appointment));
     } catch (err) {
         next(err);
@@ -145,7 +147,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
 };
 
 export const putAppointment = async (req: Request, res: Response, next: NextFunction) => {
-    const _user = (req).user._id;
+    const _user = req.user._id;
     const _id = req.params.id;
 
     const { error } = validate(req.body, true);
@@ -167,17 +169,16 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
         const updates = { $set: req.body };
         const options = { new: true };
         let msg = 'Appointment updated';
-    
-        let appointment = await Appointment
-            .findOneAndUpdate(query, updates, options);
-    
+
+        let appointment = await Appointment.findOneAndUpdate(query, updates, options);
+
         if (!appointment) {
             delete req.body.status;
             appointment = new Appointment({ ...req.body, _user });
             await appointment.save();
             msg = 'Appointment added.';
         }
-    
+
         res.status(200).json(response(msg, appointment));
     } catch (err) {
         next(err);
@@ -187,16 +188,16 @@ export const putAppointment = async (req: Request, res: Response, next: NextFunc
 export const deleteAppointment = async (req: Request, res: Response, next: NextFunction) => {
     const _user = req.user._id;
     const _id = req.params.id;
-    
+
     try {
         const query = { _user, _id };
         const options = { new: true };
         const appointment = await Appointment.findOneAndDelete(query, options);
-    
+
         if (!appointment) {
             return res.status(404).json(response('We don\'t have what you want to delete!'));
         }
-    
+
         res.status(200).json(response('Appointment deleted!', appointment));
     } catch (err) {
         next(err);

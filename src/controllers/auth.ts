@@ -64,7 +64,7 @@ export const verifyEmail = async (req: Request, res: Response, next: NextFunctio
         const query = { verificationToken: token };
         const update = { $set: { verificationToken: '', verified: true } };
         const user = await User.findOneAndUpdate(query, update, { new: true })
-        if (!user) return res.status(400).json(response('Invalid token'));
+        if (!user) return res.status(400).json(response('Invalid verification token!'));
     
         res.status(200).json(response('Email verified successfully!'));
     } catch (err) {
@@ -83,7 +83,7 @@ export const recoverPassword = async (req: Request, res: Response, next: NextFun
     
         const token = await genSalt(32);
         user.passwordResetToken = token;
-        user.passwordResetTokenExp = Date.now() + 3600000; // 1 hour from time req sent
+        user.passwordResetTokenExp = Date.now() + 3600000; // Expires in an hour
     
         await user.save();
         res.status(200).json(response('Password reset request sent!'));

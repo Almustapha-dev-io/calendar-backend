@@ -65,8 +65,8 @@ appointmentSchema.methods.getStatus = function() {
 
 export const validate = (object: any, isUpdate = false) => {
     const obj: any = {
-        title: Joi.string().min(3).max(24).required(),
-        details: Joi.string().max(64),
+        title: Joi.string().min(3).max(18).required(),
+        details: Joi.string().max(64).allow(null, ''),
         appointmentDate: Joi.date().required()
     };
 
@@ -78,8 +78,8 @@ export const validate = (object: any, isUpdate = false) => {
 
 export const validateForUpdate = (object: any) => {
     const schema = Joi.object({
-        title: Joi.string().min(3).max(24),
-        details: Joi.string().max(64),
+        title: Joi.string().min(3).max(18),
+        details: Joi.string().max(64).allow(null, ''),
         status: Joi.string(),
         appointmentDate: Joi.date()
     }).required();
