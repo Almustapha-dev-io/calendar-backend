@@ -109,5 +109,15 @@ const validateUser = (obj: any) => {
     return schema.validate(obj);
 };
 
+const changePassordValidator = (obj: any) => {
+    const schema = Joi.object({
+        password: Joi.string().alphanum().min(8).required(),
+        confirmPassword: Joi.string().alphanum().min(8)
+    });
+
+    return schema.validate(obj);
+};
+
 export const validate = validateUser;
+export const validatePassword = changePassordValidator;
 export default mongoose.model<IUserDocument, IUserModel>('User', userSchema);

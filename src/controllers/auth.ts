@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import _ from 'lodash';
 
-import User, { validate } from '../models/User';
+import User, { validate, validatePassword } from '../models/User';
 import response from '../util/buildResponse';
 import { genSalt } from '../util/hasher';
 import { sendMail, MailType } from '../util/mailer';
@@ -99,6 +99,12 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const { token, password, confirmPassword } = req.body;
     if (!token) return res.status(400).json(response('Invalid token'));
 
+    const { error } = validatePassword({ password, confirmPassword });
+    if (error) {
+        const msg = error.details[0].message;
+        return res.status(400).json(response(msg));
+    }
+
     if (!password || !confirmPassword) return res.status(400).json(response('"Password" and "confirmPassword are required'));
     if (password !== confirmPassword) return res.status(422).json(response('Password and confirm password not same'));
 
@@ -120,4 +126,9 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     } catch (err) {
         next(err);
     }
+}
+
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    const { oldPassword, newPassword } = req.body;
 }

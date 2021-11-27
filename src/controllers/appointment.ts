@@ -134,7 +134,7 @@ export const patchAppointment = async (req: Request, res: Response, next: NextFu
         const options = { new: true };
         const appointment = await Appointment.findOneAndUpdate(query, updates, options);
 
-        if (!appointment) {
+        if (!appointment) { 
             const errMsg = 'We dont have what you tried to update!';
             return res.status(404).json(response(errMsg));
         }
