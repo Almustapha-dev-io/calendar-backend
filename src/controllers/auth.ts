@@ -99,13 +99,15 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const { token, password, confirmPassword } = req.body;
     if (!token) return res.status(400).json(response('Invalid token'));
 
-    // const { error } = validatePassword({ password, confirmPassword });
-    // if (error) {
-    //     const msg = error.details[0].message;
-    //     return res.status(400).json(response(msg));
-    // }
+    const errors = validatePassword(
+        { label: 'Password', value: password },
+        { label: 'Confirm password', value: confirmPassword },
+    );
+    if (errors.length) {
+        const msg = errors[0].details[0].message;
+        return res.status(400).json(response(msg));
+    }
 
-    if (!password || !confirmPassword) return res.status(400).json(response('"Password" and "confirmPassword are required'));
     if (password !== confirmPassword) return res.status(422).json(response('Password and confirm password not same'));
 
     try {
@@ -132,7 +134,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
     const { oldPassword, newPassword } = req.body;
 
-    let errors = validatePassword(
+    const errors = validatePassword(
         { label: 'New password', value: newPassword },
         { label: 'Old password', value: oldPassword }
     );
