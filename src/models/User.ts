@@ -112,7 +112,8 @@ const validateUser = (obj: any) => {
 const changePassordValidator = (obj: any) => {
     const schema = Joi.object({
         password: Joi.string().alphanum().min(8).required(),
-        confirmPassword: Joi.string().alphanum().min(8)
+        confirmPassword: Joi.string().alphanum().min(8),
+        oldPassword: Joi.string().alphanum().min(8)
     });
 
     return schema.validate(obj);

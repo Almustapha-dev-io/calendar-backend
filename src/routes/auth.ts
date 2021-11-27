@@ -4,8 +4,10 @@ import {
     signIn, 
     verifyEmail, 
     recoverPassword, 
-    resetPassword 
+    resetPassword, 
+    changePassword
 } from '../controllers/auth';
+import isAuth from '../middleware/isAuth';
 
 const router = express.Router();
 
@@ -14,5 +16,6 @@ router.post('/signup', signUp);
 router.post('/verify', verifyEmail);
 router.post('/recover-password', recoverPassword);
 router.post('/reset-password', resetPassword);
+router.patch('/change-password', isAuth, changePassword);
 
 export default router;

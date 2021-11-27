@@ -126,9 +126,30 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     } catch (err) {
         next(err);
     }
-}
+};
 
 
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
     const { oldPassword, newPassword } = req.body;
-}
+
+    const { error } = validatePassword({ password: newPassword, oldPassword });
+    if (error) {
+        const msg = error.details[0].message;
+        return res.status(400).json(response(msg));
+    }
+
+    const user = req.user;
+    
+    try {
+        const oldPasswordValid = await user.comparePassword(oldPassword);
+        if (!oldPasswordValid) return res.status(400).json(response('Your current password is incorrect!'));
+
+        user.password = newPassword;
+        await user.hashPassword();
+        await user.save();
+
+        res.status(200).json(response('Password changed!'));
+    } catch (err) {
+        next(err);
+    }
+};
