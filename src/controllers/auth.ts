@@ -99,11 +99,11 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const { token, password, confirmPassword } = req.body;
     if (!token) return res.status(400).json(response('Invalid token'));
 
-    const { error } = validatePassword({ password, confirmPassword });
-    if (error) {
-        const msg = error.details[0].message;
-        return res.status(400).json(response(msg));
-    }
+    // const { error } = validatePassword({ password, confirmPassword });
+    // if (error) {
+    //     const msg = error.details[0].message;
+    //     return res.status(400).json(response(msg));
+    // }
 
     if (!password || !confirmPassword) return res.status(400).json(response('"Password" and "confirmPassword are required'));
     if (password !== confirmPassword) return res.status(422).json(response('Password and confirm password not same'));
@@ -132,14 +132,17 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
     const { oldPassword, newPassword } = req.body;
 
-    const { error } = validatePassword({ password: newPassword, oldPassword });
-    if (error) {
-        const msg = error.details[0].message;
+    let errors = validatePassword(
+        { label: 'New password', value: newPassword },
+        { label: 'Old password', value: oldPassword }
+    );
+    
+    if (errors.length) {
+        const msg = errors[0].details[0].message;
         return res.status(400).json(response(msg));
     }
 
     const user = req.user;
-    
     try {
         const oldPasswordValid = await user.comparePassword(oldPassword);
         if (!oldPasswordValid) return res.status(400).json(response('Your current password is incorrect!'));

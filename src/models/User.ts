@@ -4,6 +4,7 @@ import _ from 'lodash';
 
 import { jwtSign } from '../util/jwt';
 import { hash, compare, genSalt } from '../util/hasher';
+import IPasswordValidation from './IPasswordValidation';
 
 const userSchema = new Schema<IUserDocument, IUserModel>({
     email: {
@@ -22,7 +23,7 @@ const userSchema = new Schema<IUserDocument, IUserModel>({
         required: true,
         trim: true
     },
-    password:  {
+    password: {
         type: String,
         required: true
     },
@@ -57,11 +58,11 @@ export interface IUserDocument extends IUser, Document {
     generateAuthToken(): Promise<string>;
 };
 
-export interface IUserModel extends Model<IUserDocument> {}
+export interface IUserModel extends Model<IUserDocument> { }
 
 userSchema.methods.generateAuthToken = function () {
     const payload = _.pick(this, ['_id', 'fullName', 'email']);
-    
+
     return new Promise(async (resolve, reject) => {
         try {
             const token = await jwtSign(payload);
@@ -105,20 +106,20 @@ const validateUser = (obj: any) => {
         firstName: Joi.string().min(2).required(),
         lastName: Joi.string().min(2).required()
     }).required();
-    
+
     return schema.validate(obj);
 };
 
-const changePassordValidator = (obj: any) => {
-    const schema = Joi.object({
-        password: Joi.string().alphanum().min(8).required(),
-        confirmPassword: Joi.string().alphanum().min(8),
-        oldPassword: Joi.string().alphanum().min(8)
+const passwordValidator = (...args: IPasswordValidation[]) => {
+    const validator = Joi.string().alphanum().min(8).required();
+    const results: Joi.ValidationError[] = [];
+    args.forEach(arg => {
+        const { error } = validator.label(arg.label).validate(arg.value);
+        if (error) results.push(error);
     });
-
-    return schema.validate(obj);
+    return results;
 };
 
 export const validate = validateUser;
-export const validatePassword = changePassordValidator;
+export const validatePassword = passwordValidator;
 export default mongoose.model<IUserDocument, IUserModel>('User', userSchema);
