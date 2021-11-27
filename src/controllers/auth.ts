@@ -176,7 +176,7 @@ export const changeEmail = async (req: Request, res: Response, next: NextFunctio
 
     try {
         const passwordValid = await user.comparePassword(password);
-        if (!passwordValid) return res.status(400).json(response('Wrong password!'));
+        if (!passwordValid) return res.status(400).json(response('Wrong password. Enter your correct password.'));
 
         const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(400).json(response('A user exists with the given email!'));
