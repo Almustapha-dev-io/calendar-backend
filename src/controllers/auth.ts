@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import _ from 'lodash';
 
-import User, { validate, validatePassword } from '../models/User';
+import User, { validate, validatePassword, validateEmail } from '../models/User';
 import response from '../util/buildResponse';
 import { genSalt } from '../util/hasher';
 import { sendMail, MailType } from '../util/mailer';
@@ -96,21 +96,23 @@ export const recoverPassword = async (req: Request, res: Response, next: NextFun
 
 
 export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    const { token, password, confirmPassword } = req.body;
+    if (!token) return res.status(400).json(response('Invalid token'));
+
+    const errors = validatePassword(
+        { label: 'Password', value: password },
+        { label: 'Confirm password', value: confirmPassword },
+    );
+    if (errors.length) {
+        const msg = errors[0].details[0].message;
+        return res.status(400).json(response(msg));
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(422).json(response('Password and confirm password not same'));
+    }
+
     try {
-        const { token, password, confirmPassword } = req.body;
-        if (!token) return res.status(400).json(response('Invalid token'));
-
-        const errors = validatePassword(
-            { label: 'Password', value: password },
-            { label: 'Confirm password', value: confirmPassword },
-        );
-        if (errors.length) {
-            const msg = errors[0].details[0].message;
-            return res.status(400).json(response(msg));
-        }
-
-        if (password !== confirmPassword) return res.status(422).json(response('Password and confirm password not same'));
-
         const user = await User.findOne({
             passwordResetToken: token,
             passwordResetTokenExp: { $gt: Date.now() }
@@ -132,18 +134,18 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 
 
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    const { oldPassword, newPassword } = req.body;
+    const errors = validatePassword(
+        { label: 'New password', value: newPassword },
+        { label: 'Old password', value: oldPassword }
+    );
+
+    if (errors.length) {
+        const msg = errors[0].details[0].message;
+        return res.status(400).json(response(msg));
+    }
+
     try {
-        const { oldPassword, newPassword } = req.body;
-        const errors = validatePassword(
-            { label: 'New password', value: newPassword },
-            { label: 'Old password', value: oldPassword }
-        );
-
-        if (errors.length) {
-            const msg = errors[0].details[0].message;
-            return res.status(400).json(response(msg));
-        }
-
         const user = req.user;
         const oldPasswordValid = await user.comparePassword(oldPassword);
         if (!oldPasswordValid) return res.status(400).json(response('Your current password is incorrect!'));
@@ -153,6 +155,36 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
         await user.save();
 
         res.status(200).json(response('Password changed!'));
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+export const changeEmail = async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
+    const { error } = validateEmail(email);
+    if (error) {
+        const msg = error.details[0].message;
+        return res.status(400).json(response(msg));
+    }
+
+    if (!password) return res.status(400).json(response('Password is required'));
+
+    const user = req.user;
+    if (email === user.email) return res.status(422).json(response('New email same as current email.'));
+
+    try {
+        const passwordValid = await user.comparePassword(password);
+        if (!passwordValid) return res.status(400).json(response('Wrong password!'));
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json(response('A user exists with the given email!'));
+
+        user.email = email.trim();
+        await user.save();
+
+        res.status(200).json(response('Your email address was updated!'));
     } catch (err) {
         next(err);
     }

@@ -120,6 +120,13 @@ const passwordValidator = (...args: IPasswordValidation[]) => {
     return results;
 };
 
+
+const emailValidator = (email: string) => {
+    const validator = Joi.string().email().required().label('email');
+    return validator.validate(email);
+}
+
 export const validate = validateUser;
 export const validatePassword = passwordValidator;
+export const validateEmail = emailValidator;
 export default mongoose.model<IUserDocument, IUserModel>('User', userSchema);
