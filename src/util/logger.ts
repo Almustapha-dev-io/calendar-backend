@@ -24,7 +24,6 @@ if (process.env.LOG_FILE) {
 }
 
 const logger = createLogger({
-    level: 'info',
     format: format.json(),
     transports: [new transports.Console({ format: format.json() })],
     exceptionHandlers: errorTransports
