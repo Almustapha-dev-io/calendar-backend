@@ -1,8 +1,17 @@
 import redis from 'redis';
 
-const REDIS_URL = (process.env.REDIS_TLS_URL || process.env.REDIS_URL) || 'redis://127.0.0.1:6379';
+let client: redis.RedisClient;
+const REDIS_URL = (process.env.REDIS_TLS_URL || process.env.REDIS_URL);
 
-let client = redis.createClient(REDIS_URL);
+if (REDIS_URL) {
+    client = redis.createClient(REDIS_URL)
+} else {
+    client = redis.createClient({
+        host: process.env.RDIS_HOST,
+        password: process.env.REDIS_PASS,
+        port: +process.env.REDIS_PORT!
+    });
+}
 
 export const redisGet = (key: string, field: string): Promise<string> => {
     return new Promise((resolve, reject) => {
