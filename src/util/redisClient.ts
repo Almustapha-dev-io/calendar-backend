@@ -7,7 +7,7 @@ if (REDIS_URL) {
     client = redis.createClient(REDIS_URL)
 } else {
     client = redis.createClient({
-        host: process.env.RDIS_HOST,
+        host: process.env.REDIS_HOST,
         password: process.env.REDIS_PASS,
         port: +process.env.REDIS_PORT!
     });
