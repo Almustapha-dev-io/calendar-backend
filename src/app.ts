@@ -8,8 +8,6 @@ import enableProdMode from './startup/prod';
 
 import logger from './util/logger';
 
-// import './util/cache';
-
 const app = express();
 
 logErrors();
