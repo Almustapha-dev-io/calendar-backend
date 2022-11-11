@@ -20,10 +20,10 @@ export const getAppointments = async (req: Request, res: Response, next: NextFun
             .select('-__v')
             .skip((page - 1) * pageSize)
             .limit(pageSize)
-            .cache({
-                key: _user.toString(),
-                fieldKey: `allAppointments_${page}_${pageSize}`
-            });
+//             .cache({
+//                 key: _user.toString(),
+//                 fieldKey: `allAppointments_${page}_${pageSize}`
+//             });
 
         res.status(200).json(response('Appointments fetched', { appointments, totalDocs }));
     } catch (err) {
@@ -52,7 +52,7 @@ export const getAppointmentsForMonth = async (req: Request, res: Response, next:
     try {
         const appointments = await Appointment
             .find({ appointmentDate: { $gte: new Date(firstDay), $lte: new Date(lastDay) }, _user })
-            .cache({ key: req.user._id, fieldKey: `appointments_${firstDay}_${lastDay}` });
+//             .cache({ key: req.user._id, fieldKey: `appointments_${firstDay}_${lastDay}` });
 
         res.status(200).json(response('Appointments fetched', appointments));
     } catch (err) {
@@ -67,10 +67,10 @@ export const getAppointment = async (req: Request, res: Response, next: NextFunc
             .findOne({ _user, _id: req.params.id })
             .populate('_user', 'fullName')
             .select('-__v')
-            .cache({
-                key: _user.toString(),
-                fieldKey: `appointment_${req.params.id}`
-            });
+//             .cache({
+//                 key: _user.toString(),
+//                 fieldKey: `appointment_${req.params.id}`
+//             });
 
         if (!appointment) {
             return res.status(404).json(response('We don\'t have that!'));
