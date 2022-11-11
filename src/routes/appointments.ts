@@ -3,7 +3,6 @@ import express from 'express';
 import isAuth from '../middleware/isAuth';
 import { validateObjectId } from '../middleware/validateObjectId';
 import validateDate from '../middleware/validateDate';
-// import clearCache from '../middleware/clearCache';
 
 import {
     deleteAppointment,
