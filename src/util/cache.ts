@@ -16,35 +16,35 @@ mongoose.Query.prototype.cache = function (opts: ICacheOptions) {
 mongoose.Query.prototype.exec = async function () {
     return exec.apply(this, arguments as any);
     
-    if (!this._useCache) {
-        return exec.apply(this, arguments as any);
-    }
+//     if (!this._useCache) {
+//         return exec.apply(this, arguments as any);
+//     }
 
-    const hashKey = this._hashKey;
-    const key = this._fieldKey;
+//     const hashKey = this._hashKey;
+//     const key = this._fieldKey;
 
-    try {
-        const cachedValue = await redisGet(hashKey, key);
+//     try {
+//         const cachedValue = await redisGet(hashKey, key);
 
-        if (cachedValue) {
-            const doc = JSON.parse(cachedValue);
+//         if (cachedValue) {
+//             const doc = JSON.parse(cachedValue);
 
-            return Array.isArray(doc) ?
-                doc.map(d => new this.model(d))
-                : new this.model(doc);
-        }
+//             return Array.isArray(doc) ?
+//                 doc.map(d => new this.model(d))
+//                 : new this.model(doc);
+//         }
 
-    } catch (err) {
-        logger.error(err)
-    }
+//     } catch (err) {
+//         logger.error(err)
+//     }
 
-    const result = await exec.apply(this, arguments as any);
-    if (result) client.hset(hashKey, key, JSON.stringify(result));
-    return result;
+//     const result = await exec.apply(this, arguments as any);
+//     if (result) client.hset(hashKey, key, JSON.stringify(result));
+//     return result;
 };
 
-const clearHash = (hashKey: string) => {
-    client.del(JSON.stringify(hashKey));
-};
+// const clearHash = (hashKey: string) => {
+//     client.del(JSON.stringify(hashKey));
+// };
 
-export default clearHash;
+// export default clearHash;
