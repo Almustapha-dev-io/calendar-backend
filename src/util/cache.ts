@@ -1,19 +1,21 @@
 import mongoose from 'mongoose';
-import client, { redisGet } from './redisClient';
+// import client, { redisGet } from './redisClient';
 import ICacheOptions from '../models/ICacheOptions';
 import logger from '../util/logger';
 
 const exec = mongoose.Query.prototype.exec;
 
 mongoose.Query.prototype.cache = function (opts: ICacheOptions) {
-    this._useCache = true;
-    this._hashKey = JSON.stringify(opts.key);
-    this._fieldKey = JSON.stringify(opts.fieldKey);
+    //  this._useCache = true;
+    //  this._hashKey = JSON.stringify(opts.key);
+    //  this._fieldKey = JSON.stringify(opts.fieldKey);
 
     return this;
 }
 
 mongoose.Query.prototype.exec = async function () {
+    return exec.apply(this, arguments as any);
+    
     if (!this._useCache) {
         return exec.apply(this, arguments as any);
     }
