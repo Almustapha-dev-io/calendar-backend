@@ -3,7 +3,7 @@ import express from 'express';
 import isAuth from '../middleware/isAuth';
 import { validateObjectId } from '../middleware/validateObjectId';
 import validateDate from '../middleware/validateDate';
-import clearCache from '../middleware/clearCache';
+// import clearCache from '../middleware/clearCache';
 
 import {
     deleteAppointment,
@@ -20,9 +20,9 @@ const router = express.Router();
 router.get('/', isAuth, getAppointments);
 router.get('/:month/:year', isAuth, getAppointmentsForMonth);
 router.get('/:id', [isAuth, validateObjectId], getAppointment);
-router.post('/', [isAuth, validateDate, clearCache], postAppointment);
-router.put('/:id', [isAuth, validateObjectId, validateDate, clearCache], putAppointment);
-router.patch('/:id', [isAuth, validateObjectId, validateDate, clearCache], patchAppointment);
-router.delete('/:id', [isAuth, validateObjectId, clearCache], deleteAppointment);
+router.post('/', [isAuth, validateDate], postAppointment);
+router.put('/:id', [isAuth, validateObjectId, validateDate], putAppointment);
+router.patch('/:id', [isAuth, validateObjectId, validateDate], patchAppointment);
+router.delete('/:id', [isAuth, validateObjectId], deleteAppointment);
 
 export default router;
